@@ -6,7 +6,7 @@ const noiseUrl = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 
 createRoot(document.getElementById("root")!).render(
   <>
-    <div className="pointer-events-none fixed inset-0 z-[9999] opacity-[0.07]" style={{ backgroundImage: noiseUrl, backgroundRepeat: "repeat", backgroundSize: "128px 128px",}}/>
+    <div className="pointer-events-none fixed inset-0 z-[9999] opacity-[0.05]" style={{ backgroundImage: noiseUrl, backgroundRepeat: "repeat", backgroundSize: "128px 128px",}}/>
     <App />
   </>
 );
