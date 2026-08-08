@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocalUser } from "@/hooks/useLocalUser";
 import type { Tables, Enums } from "@/integrations/supabase/types";
@@ -6,6 +6,8 @@ import { enqueueAction } from "@/lib/syncQueue";
 
 export type Supply = Tables<"supplies">;
 export type SupplyCategory = Enums<"supply_category">;
+
+const LOG_DEBOUNCE_MS = 2000;
 
 function cacheKey(knotId: string) {
   return `cached-supplies-${knotId}`;
@@ -33,6 +35,10 @@ export function useSupplies() {
   const [supplies, setSupplies] = useState<Supply[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
+
+  // Tracks accumulated "have" deltas per supply item, flushed to the
+  // activity log as one entry after LOG_DEBOUNCE_MS of no further changes
+  const pendingLogRef = useRef<Record<string, { timer: ReturnType<typeof setTimeout>; total: number }>>({});
 
   const fetchSupplies = useCallback(async (showLoading = false) => {
     if (!user?.knotId) {
@@ -92,6 +98,19 @@ export function useSupplies() {
     window.addEventListener("knot-sync-complete", handler);
     return () => window.removeEventListener("knot-sync-complete", handler);
   }, [fetchSupplies]);
+
+  const flushHaveLog = useCallback(async (id: string) => {
+    const pending = pendingLogRef.current[id];
+    delete pendingLogRef.current[id];
+    if (!pending || pending.total === 0) return;
+
+    try {
+      const { error } = await supabase.rpc("log_supply_have_change", { p_id: id, p_total_delta: pending.total });
+      if (error) throw error;
+    } catch {
+      enqueueAction("log_supply_have_change", { id, totalDelta: pending.total });
+    }
+  }, []);
 
   const addSupply = useCallback(async (item: { name: string; category: SupplyCategory; need: number; unit: string }) => {
     if (!user?.knotId) return { error: new Error("No knot") };
@@ -184,12 +203,41 @@ export function useSupplies() {
     try {
       const { error } = await supabase.rpc("adjust_supply_have", { p_id: id, p_delta: delta });
       if (error) throw error;
-      return { error: null };
     } catch {
       enqueueAction("adjust_supply_have", { id, delta });
-      return { error: null };
     }
-  }, [user?.knotId]);
+
+    // Debounce the activity log entry: accumulate this delta, restart the timer
+    const existing = pendingLogRef.current[id];
+    const total = (existing?.total ?? 0) + delta;
+    if (existing?.timer) clearTimeout(existing.timer);
+
+    pendingLogRef.current[id] = {
+      total,
+      timer: setTimeout(() => flushHaveLog(id), LOG_DEBOUNCE_MS),
+    };
+
+    return { error: null };
+  }, [user?.knotId, flushHaveLog]);
+
+  // Flush any pending logs immediately if the hook unmounts mid-debounce
+  // (e.g. navigating away right after adjusting a quantity)
+  useEffect(() => {
+    return () => {
+      Object.keys(pendingLogRef.current).forEach((id) => {
+        const pending = pendingLogRef.current[id];
+        clearTimeout(pending.timer);
+        if (pending.total !== 0) {
+          Promise.resolve(
+            supabase.rpc("log_supply_have_change", { p_id: id, p_total_delta: pending.total })
+          ).catch(() => {
+            enqueueAction("log_supply_have_change", { id, totalDelta: pending.total });
+          });
+        }
+      });
+      pendingLogRef.current = {};
+    };
+  }, []);
 
   const removeSupply = useCallback(async (id: string) => {
     setSupplies((prev) => {

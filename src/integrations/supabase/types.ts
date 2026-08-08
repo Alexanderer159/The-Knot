@@ -39,6 +39,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          actor_name: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          knot_id: string
+        }
+        Insert: {
+          action: string
+          actor_name: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          knot_id: string
+        }
+        Update: {
+          action?: string
+          actor_name?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          knot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_knot_id_fkey"
+            columns: ["knot_id"]
+            isOneToOne: false
+            referencedRelation: "knots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knots: {
         Row: {
           code: string
@@ -246,6 +281,11 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      log_actor_name: { Args: { p_knot_id: string }; Returns: string }
+      log_supply_have_change: {
+        Args: { p_id: string; p_total_delta: number }
+        Returns: undefined
       }
       my_knot_id: { Args: never; Returns: string }
     }

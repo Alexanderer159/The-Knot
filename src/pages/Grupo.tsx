@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { roleLabels, roleDescriptions, useAppState, type RoleType, type StatusType } from "@/lib/store";
+import { roleLabels, roleDescriptions, type RoleType, type StatusType } from "@/lib/store";
 import { useMembers } from "@/hooks/useMembers";
 import { useSupplies } from "@/hooks/useSupplies";
+import { useActivityLog } from "@/hooks/useActivityLog";
+import { timeAgo } from "@/lib/timeAgo";
 import { roleCategoryMap } from "@/lib/supplies";
 import { useLocalUser } from "@/hooks/useLocalUser";
 import { cn } from "@/lib/utils";
@@ -30,7 +32,7 @@ export default function Grupo() {
   const { user, addDependent, removeDependent, shareLocation } = useLocalUser();
   const { toast } = useToast();
   const { roster } = useMembers();
-  const { activity } = useAppState();
+  const { entries: activity } = useActivityLog(10);
   const navigate = useNavigate();
   const [sheetRole, setSheetRole] = useState<RoleType | null>(null);
   const { supplies } = useSupplies();
@@ -112,107 +114,104 @@ export default function Grupo() {
       </div>
 
       {/* Members / Activity Accordion */}
-<Accordion type="single" collapsible defaultValue="members" >
-  <AccordionItem value="members" className="border-none">
-    <AccordionTrigger className="hover:no-underline">
-      <CardTitle className="text-base flex items-center gap-2">
-        <Users className="h-4 w-4 text-primary" />
-        KNOT MEMBERS
-      </CardTitle>
-    </AccordionTrigger>
-    <AccordionContent className="">
-      <div className="space-y-2">
-        {roster.map((entry) => {
-          const Icon = roleIcons[entry.role];
-          const isCurrentUser = user?.role === entry.role;
-          const hasValidLocation = entry.filled && entry.latitude && entry.longitude && !(entry.latitude === 0 && entry.longitude === 0);
+      <Accordion type="single" collapsible defaultValue="members">
+        <AccordionItem value="members" className="border-none">
+          <AccordionTrigger className="hover:no-underline">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary" />
+              KNOT MEMBERS
+            </CardTitle>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-2">
+              {roster.map((entry) => {
+                const Icon = roleIcons[entry.role];
+                const isCurrentUser = user?.role === entry.role;
+                const hasValidLocation = entry.filled && entry.latitude && entry.longitude && !(entry.latitude === 0 && entry.longitude === 0);
 
-          return (
-            <Card key={entry.role} className={cn("relative transition-all", !entry.filled && "")}
-              onClick={() => setSheetRole(entry.role)}
-            >
-              <span className={cn("absolute top-2 right-2 h-2 w-2 rounded-full shrink-0",
-                entry.status === "ok" ? "bg-safe" :
-                entry.status === "help" ? "bg-warning animate-pulse-glow" :
-                entry.status === "critical" ? "bg-critical animate-pulse-glow" : ""
-              )} />
+                return (
+                  <Card key={entry.role} className={cn("relative transition-all", !entry.filled && "")}
+                    onClick={() => setSheetRole(entry.role)}
+                  >
+                    <span className={cn("absolute top-2 right-2 h-2 w-2 rounded-full shrink-0",
+                      entry.status === "ok" ? "bg-safe" :
+                      entry.status === "help" ? "bg-warning animate-pulse-glow" :
+                      entry.status === "critical" ? "bg-critical animate-pulse-glow" : ""
+                    )} />
 
-              <CardContent className="flex items-center justify-between gap-3">
-                <div className="flex h-10 w-10 items-center justify-center">
-                  <Icon className="text-primary" />
-                </div>
+                    <CardContent className="flex items-center justify-between gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center">
+                        <Icon className="text-primary" />
+                      </div>
 
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold">
-                    {roleLabels[entry.role]}
-                    {isCurrentUser && <span className="text-primary text-xs ml-2">(You)</span>}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {entry.filled ? `${entry.displayName}` : "Role not filled"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{roleDescriptions[entry.role]}</p>
-                </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold">
+                          {roleLabels[entry.role]}
+                          {isCurrentUser && <span className="text-primary text-xs ml-2">(You)</span>}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {entry.filled ? `${entry.displayName}` : "Role not filled"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{roleDescriptions[entry.role]}</p>
+                      </div>
 
-                <div className="flex flex-col justify-center items-center gap-2">
-                  {!entry.filled ? (
-                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="h-4 w-4 shrink-0" />
-                      No Location
-                    </p>
-                  ) : hasValidLocation ? (
-                    <button
-                      onClick={(e) => goToLocation(e, entry.latitude!, entry.longitude!)}
-                      className="text-sm text-muted-foreground font-mono flex items-center gap-1 mt-0.5 hover:text-primary transition-colors"
-                    >
-                      <MapPin className="h-4 w-4 shrink-0 text-primary" />
-                      {entry.latitude!.toFixed(4)}, {entry.longitude!.toFixed(4)}
-                    </button>
-                  ) : (
-                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                      <MapPin className="h-4 w-4 shrink-0" />
-                      Location unknown
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </AccordionContent>
-  </AccordionItem>
-
-  <AccordionItem value="activity" className="border-none">
-    <AccordionTrigger className="hover:no-underline">
-      <CardTitle className="text-base flex items-center gap-2">
-        <ListChecks className="h-4 w-4 text-primary" />
-        ACTIVITY FEED
-      </CardTitle>
-    </AccordionTrigger>
-    <AccordionContent >
-      <div className="space-y-2">
-        {activity.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-2">No activity yet</p>
-        )}
-        {activity.map((item) => (
-          <div key={item.id} className="flex items-start gap-3 rounded-lg bg-secondary/50 px-3 py-2.5">
-            <span className={cn(
-              "mt-1 h-2 w-2 rounded-full shrink-0",
-              item.type === "alert" ? "bg-warning" : item.type === "status" ? "bg-safe" : "bg-muted-foreground"
-            )} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm">
-                <span className="font-semibold">{item.memberName}</span>{" "}
-                <span className="text-muted-foreground">{item.action}</span>
-              </p>
+                      <div className="flex flex-col justify-center items-center gap-2">
+                        {!entry.filled ? (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <MapPin className="h-4 w-4 shrink-0" />
+                            No Location
+                          </p>
+                        ) : hasValidLocation ? (
+                          <button
+                            onClick={(e) => goToLocation(e, entry.latitude!, entry.longitude!)}
+                            className="text-sm text-muted-foreground font-mono flex items-center gap-1 mt-0.5 hover:text-primary transition-colors"
+                          >
+                            <MapPin className="h-4 w-4 shrink-0 text-primary" />
+                            {entry.latitude!.toFixed(4)}, {entry.longitude!.toFixed(4)}
+                          </button>
+                        ) : (
+                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <MapPin className="h-4 w-4 shrink-0" />
+                            Location unknown
+                          </p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-            <span className="text-xs text-muted-foreground font-mono shrink-0">{item.timestamp}</span>
-          </div>
-        ))}
-      </div>
-    </AccordionContent>
-  </AccordionItem>
-</Accordion>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="activity" className="border-none">
+          <AccordionTrigger className="hover:no-underline">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ListChecks className="h-4 w-4 text-primary" />
+              ACTIVITY FEED
+            </CardTitle>
+          </AccordionTrigger>
+          <AccordionContent>
+            <div className="space-y-2">
+              {activity.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-2">No activity yet</p>
+              )}
+              {activity.map((item) => (
+                <div key={item.id} className="flex items-start gap-3 rounded-lg bg-secondary/50 px-3 py-2.5">
+                  <span className="mt-1 h-2 w-2 rounded-full shrink-0 bg-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">
+                      <span className="font-semibold">{item.actor_name}</span>{" "}
+                      <span className="text-muted-foreground">{item.action}</span>
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-mono shrink-0">{timeAgo(item.created_at)}</span>
+                </div>
+              ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Family Nodes */}
       <Card className="tactical-border">
