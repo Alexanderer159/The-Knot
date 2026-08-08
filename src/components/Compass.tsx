@@ -14,7 +14,7 @@ function headingLabel(heading: number): string {
 }
 
 export function Compass() {
-  const { heading, supported, permissionNeeded, permissionGranted, error, requestPermission } = useCompassHeading();
+  const { heading, supported, permissionNeeded, permissionGranted, error, requestPermission, recalibrateToNorth, resetCalibration } = useCompassHeading();
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
 
@@ -157,6 +157,22 @@ export function Compass() {
           <p className="text-xs text-foreground text-center max-w-xs px-6">
             Points to magnetic north. Move away from metal objects or electronics for a better reading. Tap anywhere to close.
           </p>
+
+          {/* Recalibration controls, stopPropagation so tapping these doesn't also close the overlay */}
+          <div
+            className={cn(
+              "flex gap-2 transition-all duration-300 delay-150 ease-out",
+              visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button onClick={recalibrateToNorth} variant="outline" size="sm">
+              Set Current Direction as North
+            </Button>
+            <Button onClick={resetCalibration} variant="ghost" size="sm" className="text-muted-foreground">
+              Reset
+            </Button>
+          </div>
         </div>
       )}
     </>
