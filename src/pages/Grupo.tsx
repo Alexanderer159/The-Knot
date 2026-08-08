@@ -198,7 +198,7 @@ export default function Grupo() {
               )}
               {activity.map((item) => (
                 <div key={item.id} className="flex items-start gap-3 rounded-lg bg-secondary/50 px-3 py-2.5">
-                  <span className="mt-1 h-2 w-2 rounded-full shrink-0 bg-primary" />
+                  <span className="mt-1 h-2 w-2 rounded-full shrink-0 bg-white/30" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm">
                       <span className="font-semibold">{item.actor_name}</span>{" "}
