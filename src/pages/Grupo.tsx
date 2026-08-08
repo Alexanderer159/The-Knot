@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Shield, Heart, Compass, Radio, Package, HardHat, Users, UserPlus, Bell, Trash2, CheckCircle2, AlertTriangle, ShieldAlert, MapPin, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ export default function Grupo() {
   const [sheetRole, setSheetRole] = useState<RoleType | null>(null);
   const { supplies } = useSupplies();
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const relevantCategories = sheetRole ? roleCategoryMap[sheetRole] : [];
   const filteredSupplies = sheetRole ? supplies.filter((s) => relevantCategories.includes(s.category)) : [];
@@ -93,6 +94,15 @@ export default function Grupo() {
   };
 
   const sheetEntry = roster.find(r => r.role === sheetRole);
+
+  useEffect(() => {
+  const quickStatus = searchParams.get("quickstatus");
+  if (quickStatus === "ok" || quickStatus === "help" || quickStatus === "critical") {
+    handleStatusClick(quickStatus);
+    // Clean the URL so refreshing doesn't re-trigger it
+    setSearchParams({}, { replace: true });
+  }
+}, []);
 
   return (
     <div className="space-y-5">

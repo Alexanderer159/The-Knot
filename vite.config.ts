@@ -33,6 +33,29 @@ export default defineConfig(({ mode }) => ({
           { src: "/icon-512-v2.png", sizes: "512x512", type: "image/png", purpose: "any" },
           { src: "/icon-512-v2.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
+        shortcuts: [
+      {
+        name: "I'm OK",
+        short_name: "OK",
+        description: "Quickly report you're okay",
+        url: "/?quickstatus=ok",
+        icons: [{ src: "/icon-192-v2.png", sizes: "192x192" }],
+      },
+      {
+        name: "Need Help",
+        short_name: "Help",
+        description: "Quickly signal you need help",
+        url: "/?quickstatus=help",
+        icons: [{ src: "/icon-192-v2.png", sizes: "192x192" }],
+      },
+      {
+        name: "Critical",
+        short_name: "Critical",
+        description: "Quickly signal a critical emergency",
+        url: "/?quickstatus=critical",
+        icons: [{ src: "/icon-192-v2.png", sizes: "192x192" }],
+      },
+    ],
   screenshots: [
     {
       src: "/icon-512-v2.png",
