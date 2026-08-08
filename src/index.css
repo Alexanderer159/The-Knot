@@ -46,12 +46,27 @@
   * {
     @apply border-border;
     overflow-clip-margin: unset;
+      -webkit-touch-callout: none;   /* iOS: disables the popup menu (Copy/Share/etc.) on long-press */
+  -webkit-user-select: none;     /* Safari */
+  -moz-user-select: none;        /* Firefox */
+  -ms-user-select: none;         /* old Edge/IE */
+  user-select: none;             /* standard */
   }
+
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
 
 body {
   @apply bg-background text-foreground font-sans antialiased;
   font-family: 'Rajdhani', sans-serif;
   position: relative;
+  -webkit-touch-callout: none;
 }
 
 body::before {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { MapPin, AlertTriangle, Droplets, Home, Share2, Users, Plus, Trash2, CheckCircle2, ShieldAlert, CompassIcon } from "lucide-react";
+import { MapPin, AlertTriangle, Droplets, Home, Share2, Users, Plus, Trash2, CheckCircle2, ShieldAlert, CompassIcon, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,6 +126,12 @@ export default function MapaPage() {
     navigate("/map", { state: { focusLat: lat, focusLng: lng } });
   };
 
+  const copyCoords = (e: React.MouseEvent, lat: number, lng: number) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(`${lat}, ${lng}`);
+    toast({ title: "Coordinates copied", description: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+  };
+
   const openShareDialog = () => {
     setShareStatus(user?.status ?? "ok");
     setShareOpen(true);
@@ -198,7 +204,15 @@ export default function MapaPage() {
                       )}
                     </p>
                   </div>
-                  <span className={cn("h-2.5 w-2.5 rounded-full", statusColors[member.status || ""] || "bg-muted-foreground")} />
+                  {hasValidLocation && (
+                    <button
+                      onClick={(e) => copyCoords(e, member.latitude!, member.longitude!)}
+                      className="h-7 w-7 rounded bg-secondary flex items-center justify-center hover:bg-accent text-muted-foreground hover:text-primary transition-colors shrink-0"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <span className={cn("h-2.5 w-2.5 rounded-full shrink-0", statusColors[member.status || ""] || "bg-muted-foreground")} />
                 </div>
               );
             })}
@@ -301,6 +315,12 @@ export default function MapaPage() {
                     {marker.latitude.toFixed(3)}, {marker.longitude.toFixed(3)}
                   </p>
                 </div>
+                <button
+                  onClick={(e) => copyCoords(e, marker.latitude, marker.longitude)}
+                  className="h-7 w-7 rounded bg-secondary flex items-center justify-center hover:bg-accent text-muted-foreground hover:text-primary transition-colors shrink-0"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
                 <button
                   onClick={(e) => requestDelete(e, marker.id, marker.name)}
                   className="h-7 w-7 rounded bg-secondary flex items-center justify-center hover:bg-critical/20 text-muted-foreground hover:text-critical transition-colors shrink-0"
