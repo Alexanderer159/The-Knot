@@ -29,21 +29,23 @@ function saveCached(knotId: string, entries: ActivityLogEntry[]) {
 export function useActivityLog(limit = 10) {
   const { user } = useLocalUser();
   const [entries, setEntries] = useState<ActivityLogEntry[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
 
   const fetchEntries = useCallback(async (showLoading = false) => {
     if (!user?.knotId) {
       setEntries([]);
+      setTotalCount(0);
       setLoading(false);
       return;
     }
     if (showLoading) setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from("activity_log")
-        .select("*")
+        .select("*", { count: "exact" })
         .eq("knot_id", user.knotId)
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -51,6 +53,7 @@ export function useActivityLog(limit = 10) {
       if (error) throw error;
       if (data) {
         setEntries(data);
+        setTotalCount(count ?? data.length);
         saveCached(user.knotId, data);
         setIsOffline(false);
       }
@@ -88,5 +91,5 @@ export function useActivityLog(limit = 10) {
     return () => window.removeEventListener("knot-sync-complete", handler);
   }, [fetchEntries]);
 
-  return { entries, loading, isOffline, refetch: () => fetchEntries(true) };
+  return { entries, totalCount, hasMore: totalCount > limit, loading, isOffline, refetch: () => fetchEntries(true) };
 }

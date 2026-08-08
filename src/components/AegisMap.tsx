@@ -218,7 +218,7 @@ export default function AegisMap({ heightClass = "h-48", focusPoint }: Props) {
       {/* Fullscreen Overlay */}
       {fullscreen && (
         <div className="fixed inset-0 z-[1000] bg-background">
-          <button onClick={() => setFullscreen(false)} className="absolute top-4 right-4 z-[1100] bg-card border border-border rounded-full p-2 shadow-lg text-primary hover:text-critical transition-all duration-300">
+          <button onClick={() => setFullscreen(false)} className="absolute top-4 right-4 z-[1100] bg-card rounded-full p-2 shadow-lg text-primary hover:text-critical transition-all duration-300">
             <X className="h-5 w-5" />
           </button>
 

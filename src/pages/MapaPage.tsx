@@ -166,7 +166,7 @@ export default function MapaPage() {
     <div className="flex flex-col gap-4">
 
       {/* Live Pod Members */}
-      {podMembers.length > 0 && (
+      
         <Card className="tactical-border">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -218,7 +218,7 @@ export default function MapaPage() {
             })}
           </CardContent>
         </Card>
-      )}
+      
 
       {/* Map Preview */}
       <AegisMap heightClass="h-60" focusPoint={focusPoint} />

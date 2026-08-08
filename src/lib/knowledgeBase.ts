@@ -1,6 +1,8 @@
 export interface KBSection {
   title: string;
   content: string;
+  diagram?: string;
+  diagramImage?: string;
 }
 
 export interface KBArticle {
@@ -32,6 +34,7 @@ export const knowledgeBase: KBArticle[] = [
       {
         title: "Recovery position",
         content: `For an unconscious victim who is breathing:\n1. Kneel beside the victim\n2. Nearest arm at a right angle\n3. Bring the far arm to the near shoulder\n4. Bend the far knee and roll toward you\n5. Adjust the head to keep the airway open\n6. Check breathing every minute`,
+        diagramImage:"/test.png",
       },
     ],
   },
@@ -44,7 +47,7 @@ export const knowledgeBase: KBArticle[] = [
     sections: [
       {
         title: "CPR in adults",
-        content: `1. Confirm they are unresponsive and not breathing normally\n2. Call emergency services (or send someone)\n3. Place the heel of your hand at the center of the chest\n4. Compress 5-6 cm deep, at a rate of 100-120/min\n5. Give 2 rescue breaths every 30 compressions (if trained)\n6. Do NOT stop until help arrives or the victim moves\n\nTip: Compress to the rhythm of "Stayin' Alive" by the Bee Gees.`,
+        content: `1. Confirm they are unresponsive and not breathing normally\n2. Call emergency services (or send someone)\n3. Place the heel of your hand at the center of the chest\n4. Compress 5-6 cm deep, at a rate of 100-120/min\n5. Give 2 rescue breaths every 30 compressions (if trained)\n6. Do NOT stop until help arrives or the victim moves\n\nTip: match the beat of a well-known upbeat pop song to keep a steady compression rhythm.`,
       },
       {
         title: "CPR in children (1-8 years)",

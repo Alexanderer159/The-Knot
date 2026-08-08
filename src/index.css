@@ -115,3 +115,7 @@ body::after {
 .leaflet-popup-close-button:hover {
   color: hsl(var(--foreground)) !important;
 }
+
+.leaflet-container {
+  background: hsl(var(--background)) !important;
+}

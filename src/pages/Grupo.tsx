@@ -32,7 +32,7 @@ export default function Grupo() {
   const { user, addDependent, removeDependent, shareLocation } = useLocalUser();
   const { toast } = useToast();
   const { roster } = useMembers();
-  const { entries: activity } = useActivityLog(10);
+  const { entries: activity, hasMore } = useActivityLog(10);
   const navigate = useNavigate();
   const [sheetRole, setSheetRole] = useState<RoleType | null>(null);
   const { supplies } = useSupplies();
@@ -96,13 +96,13 @@ export default function Grupo() {
   const sheetEntry = roster.find(r => r.role === sheetRole);
 
   useEffect(() => {
-  const quickStatus = searchParams.get("quickstatus");
-  if (quickStatus === "ok" || quickStatus === "help" || quickStatus === "critical") {
-    handleStatusClick(quickStatus);
-    // Clean the URL so refreshing doesn't re-trigger it
-    setSearchParams({}, { replace: true });
-  }
-}, []);
+    const quickStatus = searchParams.get("quickstatus");
+    if (quickStatus === "ok" || quickStatus === "help" || quickStatus === "critical") {
+      handleStatusClick(quickStatus);
+      // Clean the URL so refreshing doesn't re-trigger it
+      setSearchParams({}, { replace: true });
+    }
+  }, []);
 
   return (
     <div className="space-y-5">
@@ -218,6 +218,11 @@ export default function Grupo() {
                   <span className="text-xs text-muted-foreground font-mono shrink-0">{timeAgo(item.created_at)}</span>
                 </div>
               ))}
+              {hasMore && (
+                <Button onClick={() => navigate("/activity")} variant="ghost" size="sm" className="w-full mt-1 text-muted-foreground">
+                  See more
+                </Button>
+              )}
             </div>
           </AccordionContent>
         </AccordionItem>

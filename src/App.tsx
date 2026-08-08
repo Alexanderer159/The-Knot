@@ -1,8 +1,10 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { AnimatePresence } from "framer-motion";
+import { useLocation, Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
+import { PageTransition } from "@/components/PageTransition";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LocalUserProvider, useLocalUser } from "@/hooks/useLocalUser";
@@ -11,7 +13,7 @@ import KnotSetup from "@/pages/KnotSetup";
 import Grupo from "@/pages/Grupo";
 import MapaPage from "@/pages/MapaPage";
 import Insumos from "@/pages/Insumos";
-import Activity from "@/pages/Activity";
+import ActivityHistory from "@/pages/ActivityHistory";
 import Vault from "@/pages/Vault";
 import Config from "@/pages/Config";
 import NotFound from "@/pages/NotFound";
@@ -36,6 +38,28 @@ function Gate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/auth" element={<PageTransition><Auth /></PageTransition>} />
+        <Route path="/setup" element={<PageTransition><KnotSetup /></PageTransition>} />
+        <Route element={<Gate><AppLayout /></Gate>}>
+          <Route path="/" element={<PageTransition><Grupo /></PageTransition>} />
+          <Route path="/map" element={<PageTransition><MapaPage /></PageTransition>} />
+          <Route path="/supplies" element={<PageTransition><Insumos /></PageTransition>} />
+          <Route path="/activity" element={<PageTransition><ActivityHistory /></PageTransition>} />
+          <Route path="/vault" element={<PageTransition><Vault /></PageTransition>} />
+          <Route path="/config" element={<PageTransition><Config /></PageTransition>} />
+        </Route>
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -44,21 +68,9 @@ const App = () => (
       <AuthProvider>
         <LocalUserProvider>
           <SyncProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/setup" element={<KnotSetup />} />
-              <Route element={<Gate><AppLayout /></Gate>}>
-                <Route path="/" element={<Grupo />} />
-                <Route path="/map" element={<MapaPage />} />
-                <Route path="/supplies" element={<Insumos />} />
-                <Route path="/activity" element={<Activity />} />
-                <Route path="/vault" element={<Vault />} />
-                <Route path="/config" element={<Config />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+            <BrowserRouter>
+              <AnimatedRoutes />
+            </BrowserRouter>
           </SyncProvider>
         </LocalUserProvider>
       </AuthProvider>
