@@ -110,7 +110,7 @@ export default function Config() {
         <InstallAppCard />
 
         {/* Profile */}
-        <Card className="tactical-border">
+        <Card >
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-muted-foreground">Profile</CardTitle>
           </CardHeader>
@@ -118,7 +118,7 @@ export default function Config() {
             <div className="flex items-center gap-3 px-2 py-2">
               <User className="h-4 w-4 text-primary shrink-0" />
               <span className="text-sm flex-1">Operator Name</span>
-              <Input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onBlur={handleNameBlur} className="w-36 h-8 text-xs bg-secondary border-border text-right" />
+              <Input value={nameInput} onChange={(e) => setNameInput(e.target.value)} onBlur={handleNameBlur} className="w-36 h-8 text-xs bg-secondary text-right" />
             </div>
             <div className="flex items-center gap-3 px-2 py-2">
               <Shield className="h-4 w-4 text-primary shrink-0" />
@@ -127,7 +127,7 @@ export default function Config() {
                 <span className="text-xs font-semibold text-primary">{roleLabels[user.role]}</span>
               ) : (
                 <Select value={user.role} onValueChange={handleRoleChange} disabled={changingRole}>
-                  <SelectTrigger className="w-40 h-8 text-xs bg-secondary border-border">
+                  <SelectTrigger className="w-40 h-8 text-xs bg-secondary">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -149,7 +149,7 @@ export default function Config() {
         </Card>
 
         {/* Knot Code */}
-        <Card className="tactical-border">
+        <Card >
           <CardHeader className="pb-2">
             <CardTitle className="text-xs text-muted-foreground">Knot Code</CardTitle>
           </CardHeader>
@@ -197,7 +197,7 @@ export default function Config() {
         {isVanguard && (
           <Dialog open={deleteDialogOpen} onOpenChange={(open) => { setDeleteDialogOpen(open); if (!open) setDeleteConfirmInput(""); }}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full text-critical">
+              <Button className="w-full text-critical bg-secondary">
                 <Trash2 className="h-4 w-4 mr-2" /> DELETE KNOT
               </Button>
             </DialogTrigger>
@@ -212,12 +212,8 @@ export default function Config() {
                 <p className="text-xs text-muted-foreground">
                   Type the Knot code <span className="font-mono font-bold text-foreground">{knotCode}</span> to confirm.
                 </p>
-                <Input
-                  value={deleteConfirmInput}
-                  onChange={(e) => setDeleteConfirmInput(e.target.value.toUpperCase())}
-                  placeholder={knotCode ?? ""}
-                  className="bg-secondary border-border font-mono tracking-widest"
-                />
+                <Input value={deleteConfirmInput} onChange={(e) => setDeleteConfirmInput(e.target.value.toUpperCase())} placeholder={knotCode ?? ""} 
+                className="bg-secondary font-mono tracking-widest"/>
               </div>
               <DialogFooter className="gap-2 sm:gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setDeleteDialogOpen(false)}>

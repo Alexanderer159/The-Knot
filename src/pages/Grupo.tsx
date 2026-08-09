@@ -125,7 +125,7 @@ export default function Grupo() {
 
       {/* Members / Activity Accordion */}
       <Accordion type="single" collapsible defaultValue="members">
-        <AccordionItem value="members" className="border-none">
+        <AccordionItem value="members" className="">
           <AccordionTrigger className="hover:no-underline">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
@@ -194,7 +194,7 @@ export default function Grupo() {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="activity" className="border-none">
+        <AccordionItem value="activity" >
           <AccordionTrigger className="hover:no-underline">
             <CardTitle className="text-base flex items-center gap-2">
               <ListChecks className="h-4 w-4 text-primary" />
@@ -229,7 +229,7 @@ export default function Grupo() {
       </Accordion>
 
       {/* Family Nodes */}
-      <Card className="tactical-border">
+      <Card >
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
@@ -276,12 +276,12 @@ export default function Grupo() {
                 <form onSubmit={handleAddDependent} className="space-y-4 pt-2">
                   <div className="space-y-2">
                     <Label>Name</Label>
-                    <Input value={depName} onChange={(e) => setDepName(e.target.value)} placeholder="Full Name" className="bg-secondary border-border" required />
+                    <Input value={depName} onChange={(e) => setDepName(e.target.value)} placeholder="Full Name" className="bg-secondary" required />
                   </div>
                   <div className="space-y-2">
                     <Label>Relationship</Label>
                     <Select value={depRelation} onValueChange={setDepRelation}>
-                      <SelectTrigger className="bg-secondary border-border">
+                      <SelectTrigger className="bg-secondary">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -295,7 +295,7 @@ export default function Grupo() {
                   </div>
                   <div className="space-y-2">
                     <Label>Usual Location</Label>
-                    <Input value={depLocation} onChange={(e) => setDepLocation(e.target.value)} placeholder="Home, Work, School..." className="bg-secondary border-border" />
+                    <Input value={depLocation} onChange={(e) => setDepLocation(e.target.value)} placeholder="Home, Work, School..." className="bg-secondary" />
                   </div>
                   <Button type="submit" className="bg-primary w-full text-black font-bold">
                     <UserPlus className="h-4 w-4 mr-2" /> Link

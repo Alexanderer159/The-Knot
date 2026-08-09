@@ -167,7 +167,7 @@ export default function MapaPage() {
 
       {/* Live Pod Members */}
       
-        <Card className="tactical-border">
+        <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
@@ -223,7 +223,7 @@ export default function MapaPage() {
       {/* Map Preview */}
       <AegisMap heightClass="h-60" focusPoint={focusPoint} />
 
-      <Card className="tactical-border">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">OFFLINE MAPS</CardTitle>
         </CardHeader>
@@ -289,7 +289,7 @@ export default function MapaPage() {
       </Button>
 
       {/* Points of Interest */}
-      <Card className="tactical-border">
+      <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">POINTS OF INTEREST</CardTitle>
         </CardHeader>
@@ -332,14 +332,11 @@ export default function MapaPage() {
           })}
 
           {showAdd ? (
-            <div className="space-y-3 pt-2 border-t border-border/50 mt-3">
+            <div className="space-y-3 pt-5 border-t border-border">
               <Input placeholder="Point name" value={newName} onChange={e => setNewName(e.target.value)} className="bg-secondary" />
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                <select
-                  value={newCategory}
-                  onChange={e => setNewCategory(e.target.value as MarkerCategory)}
-                  className="rounded-md bg-secondary border border-border px-2 py-2 text-sm text-foreground col-span-3 sm:col-span-1"
-                >
+              <div className="flex flex-col gap-3">
+                <select value={newCategory} onChange={e => setNewCategory(e.target.value as MarkerCategory)}
+                 className="rounded-md bg-secondary px-2 py-2 text-sm text-foreground ">
                   {allCategories.map(c => (
                     <option key={c} value={c}>{markerLabels[c]}</option>
                   ))}
@@ -348,23 +345,23 @@ export default function MapaPage() {
                 <Input placeholder="Longitude" value={newLng} onChange={e => setNewLng(e.target.value)} className="bg-secondary" />
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleAdd} size="sm" className="flex-1" disabled={submitting}>
+                <Button onClick={handleAdd}  className="flex-1 font-bold" disabled={submitting}>
                   <Plus className="h-4 w-4 mr-1" /> {submitting ? "Adding..." : "Add"}
                 </Button>
-                <Button onClick={() => setShowAdd(false)} size="sm" variant="outline" className="flex-1">
+                <Button onClick={() => setShowAdd(false)}  className="flex-1 bg-secondary text-white">
                   Cancel
                 </Button>
               </div>
             </div>
           ) : (
-            <Button onClick={() => setShowAdd(true)} variant="outline" className="w-full tactical-border mt-2">
+            <Button onClick={() => setShowAdd(true)} variant="outline" className="w-full mt-2">
               <Plus className="h-4 w-4 mr-2" /> Add point
             </Button>
           )}
         </CardContent>
       </Card>
 
-      <Button onClick={openShareDialog} className="bg-primary w-full text-black font-bold" size="lg">
+      <Button onClick={openShareDialog} className="bg-primary w-full text-black font-bold" >
         <Share2 className="h-5 w-5 mr-2" />
         SHARE LOCATION
       </Button>
@@ -382,24 +379,24 @@ export default function MapaPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setShareStatus("ok")}
-                className={cn("flex flex-col items-center gap-1 rounded-lg py-3 border-2 transition-colors",
-                  shareStatus === "ok" ? "border-safe bg-safe/10" : "border-border bg-secondary")}
+                className={cn("flex flex-col items-center gap-1 rounded-lg py-3 transition-colors",
+                  shareStatus === "ok" ? "bg-safe/10" : "bg-secondary")}
               >
                 <CheckCircle2 className={cn("h-5 w-5", shareStatus === "ok" ? "text-safe" : "text-muted-foreground")} />
                 <span className="text-xs font-semibold">OK</span>
               </button>
               <button
                 onClick={() => setShareStatus("help")}
-                className={cn("flex flex-col items-center gap-1 rounded-lg py-3 border-2 transition-colors",
-                  shareStatus === "help" ? "border-warning bg-warning/10" : "border-border bg-secondary")}
+                className={cn("flex flex-col items-center gap-1 rounded-lg py-3 transition-colors",
+                  shareStatus === "help" ? " bg-warning/10" : " bg-secondary")}
               >
                 <AlertTriangle className={cn("h-5 w-5", shareStatus === "help" ? "text-warning" : "text-muted-foreground")} />
                 <span className="text-xs font-semibold">HELP</span>
               </button>
               <button
                 onClick={() => setShareStatus("critical")}
-                className={cn("flex flex-col items-center gap-1 rounded-lg py-3 border-2 transition-colors",
-                  shareStatus === "critical" ? "border-critical bg-critical/10" : "border-border bg-secondary")}
+                className={cn("flex flex-col items-center gap-1 rounded-lg py-3 transition-colors",
+                  shareStatus === "critical" ? "bg-critical/10" : "bg-secondary")}
               >
                 <ShieldAlert className={cn("h-5 w-5", shareStatus === "critical" ? "text-critical" : "text-muted-foreground")} />
                 <span className="text-xs font-semibold">CRITICAL</span>

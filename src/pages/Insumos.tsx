@@ -108,10 +108,10 @@ export default function Insumos() {
                 <Package className="h-7 w-7 text-primary" />
                 <span className="font-heading font-bold text-lg">{overallPercent}% COMPLETE</span>
               </div>
-              <Badge variant="outline" className="border-primary/50">{pendingCount} pending</Badge>
+              <Badge className="bg-secondary text-white">{pendingCount} pending</Badge>
             </div>
             <Progress value={overallPercent} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
+            <div className="flex justify-between text-xs text-foreground">
               <span>{completedItems} of {totalItems} items covered</span>
               <span>{supplies.filter(s => s.have < s.need).reduce((acc, s) => acc + (s.need - s.have), 0)} units needed</span>
             </div>
@@ -143,7 +143,7 @@ export default function Insumos() {
               <CardContent className="py-3 px-4 space-y-2">
                 <div className="flex items-center gap-3">
                   <button onClick={() => toggleAcquired(item)} className={cn("shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all",
-                    item.acquired ? "bg-safe border-safe" : isComplete ? "border-safe" : "border-muted-foreground/30")}>
+                    item.acquired ? "bg-safe border-safe" : isComplete ? "border-safe" : "")}>
                     {item.acquired && <Check className="h-3.5 w-3.5 text-primary-foreground" />}
                   </button>
 
@@ -170,7 +170,7 @@ export default function Insumos() {
                             onChange={e => setEditHaveValue(e.target.value)}
                             onBlur={() => saveEditHave(item)}
                             onKeyDown={e => e.key === "Enter" && saveEditHave(item)}
-                            className="w-10 h-5 text-xs font-mono bg-secondary border border-border rounded px-1 text-foreground"
+                            className="w-10 h-5 text-xs font-mono bg-secondary rounded px-1 text-foreground"
                             autoFocus
                           />
                         ) : (
@@ -191,7 +191,7 @@ export default function Insumos() {
                             onChange={e => setEditNeedValue(e.target.value)}
                             onBlur={() => saveEditNeed(item)}
                             onKeyDown={e => e.key === "Enter" && saveEditNeed(item)}
-                            className="w-10 h-5 text-xs font-mono bg-secondary border border-border rounded px-1 text-foreground"
+                            className="w-10 h-5 text-xs font-mono bg-secondary rounded px-1 text-foreground"
                             autoFocus
                           />
                         ) : (
@@ -246,18 +246,15 @@ export default function Insumos() {
 
       {/* Add Item */}
       {showAdd ? (
-        <Card className="tactical-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">ADD SUPPLY</CardTitle>
+        <Card>
+          <CardHeader className="pb-0">
+            <CardTitle className="text-sm text-center">ADD SUPPLY</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Input placeholder="Supply name" value={newName} onChange={e => setNewName(e.target.value)} className="bg-secondary" />
             <div className="grid grid-cols-3 gap-2">
-              <select
-                value={newCategory}
-                onChange={e => setNewCategory(e.target.value as SupplyCategory)}
-                className="rounded-md bg-secondary border border-border px-2 py-2 text-sm text-foreground"
-              >
+              <select value={newCategory} onChange={e => setNewCategory(e.target.value as SupplyCategory)}
+                className="rounded-md bg-secondary p-2 text-sm text-foreground">
                 {allCategories.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
@@ -266,17 +263,17 @@ export default function Insumos() {
               <Input placeholder="Unit" value={newUnit} onChange={e => setNewUnit(e.target.value)} className="bg-secondary" />
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleAddItem} size="sm" className="flex-1">
+              <Button onClick={handleAddItem} className="flex-1 font-bold">
                 <Plus className="h-4 w-4 mr-1" /> Add
               </Button>
-              <Button onClick={() => setShowAdd(false)} size="sm" variant="outline" className="flex-1">
+              <Button onClick={() => setShowAdd(false)} className="flex-1 bg-secondary text-white font-bold" >
                 Cancel
               </Button>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <Button onClick={() => setShowAdd(true)} variant="outline" className="w-full tactical-border">
+        <Button onClick={() => setShowAdd(true)} variant="outline" className="w-full">
           <Plus className="h-4 w-4 mr-2" /> Add supply
         </Button>
       )}

@@ -66,7 +66,7 @@ export default function Vault() {
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+          <Input placeholder="Search" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary" />
         </div>
 
         {/* Category Tabs */}
@@ -86,7 +86,7 @@ export default function Vault() {
               <Card
                 key={article.id}
                 onClick={() => openReader(article.id)}
-                className={cn("transition-all duration-500 cursor-pointer", isExpanded && "border-primary")}
+                className={cn("transition-all duration-500 cursor-pointer")}
               >
                 <CardContent className="py-3">
                   <div
@@ -148,20 +148,13 @@ export default function Vault() {
       {/* Fullscreen Reader */}
       {mounted && readerArticle && (
         <div
-          className={cn(
-            "fixed inset-0 z-[1000] bg-background overflow-y-auto transition-opacity duration-300 ease-in-out",
-            visible ? "opacity-100" : "opacity-0"
-          )}
-        >
-          <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
+          className={cn("fixed inset-0 z-[1000] bg-background overflow-y-auto transition-opacity duration-300 ease-in-out", visible ? "opacity-100" : "opacity-0")}>
+          <div className="sticky top-0 z-10 bg-background p-4 flex items-center justify-between">
             <div className="min-w-0 pr-3">
               <p className="text-base font-heading font-bold truncate">{readerArticle.title}</p>
               <p className="text-xs text-muted-foreground">{readerArticle.category} • {readerArticle.sections.length} sections</p>
             </div>
-            <button
-              onClick={closeReader}
-              className="shrink-0 bg-card rounded-full p-2 shadow-lg text-primary hover:text-critical transition-all duration-300"
-            >
+            <button onClick={closeReader} className="shrink-0 bg-card rounded-full p-2 shadow-lg text-primary hover:text-critical transition-all duration-300">
               <X className="h-5 w-5" />
             </button>
           </div>
