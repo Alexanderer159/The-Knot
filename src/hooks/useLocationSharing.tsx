@@ -6,6 +6,10 @@ import { Tables } from "@/integrations/supabase/types";
 
 type Member = Tables<"members">;
 
+function initialsFrom(name: string) {
+  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+}
+
 export function useLocationSharing(enabled = true) {
   const { user } = useAuth();
   const watchIdRef = useRef<number | null>(null);
@@ -52,7 +56,13 @@ export function usePodLocations() {
       .eq("knot_id", user.knotId)
       .not("latitude", "is", null)
       .then(({ data }) => {
-        if (data) setMembers(data);
+        if (data) {
+          const withInitials = data.map((m) => ({
+            ...m,
+            avatar_initials: m.avatar_initials || initialsFrom(m.display_name),
+          }));
+          setMembers(withInitials);
+        }
       });
   }, [user?.knotId]);
 

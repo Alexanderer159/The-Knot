@@ -186,7 +186,7 @@ export default function MapaPage() {
                     hasValidLocation && "cursor-pointer hover:bg-secondary/80 transition-colors"
                   )}
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-card text-xs font-bold text-primary">
                     {member.avatar_initials}
                   </div>
                   <div className="flex-1">
@@ -371,12 +371,12 @@ export default function MapaPage() {
 
       {/* Share Location Dialog */}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent className="sm:max-w-sm bg-card">
           <DialogHeader>
             <DialogTitle>Confirm Your Status</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground text-center">
               Your location will be shared with your Knot. Confirm your current status.
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -405,7 +405,7 @@ export default function MapaPage() {
                 <span className="text-xs font-semibold">CRITICAL</span>
               </button>
             </div>
-            <Button onClick={confirmShare} variant="safe" className="w-full text-white font-semibold" disabled={locating}>
+            <Button onClick={confirmShare} className="w-full font-bold" disabled={locating}>
               {locating ? "Getting location..." : "Confirm & Share"}
             </Button>
           </div>
