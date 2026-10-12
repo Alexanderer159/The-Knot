@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 
 export type StatusType = "ok" | "help" | "critical" | null;
-export type RoleType = "vanguard" | "medic" | "navigator" | "comms" | "quartermaster" | "builder";
 
 export interface ActivityItem {
   id: string;
@@ -20,24 +19,6 @@ export const mockActivity: ActivityItem[] = [
   { id: "4", memberId: "4", memberName: "María G.", action: "Point Beta Check In", timestamp: "14:05", type: "checkin" },
   { id: "5", memberId: "5", memberName: "Diego F.", action: "Warning: Water at 20%", timestamp: "13:50", type: "alert" },
 ];
-
-export const roleLabels: Record<RoleType, string> = {
-  vanguard: "Vanguard",
-  medic: "Medic",
-  navigator: "Navigator",
-  comms: "Comms",
-  quartermaster: "Quartermaster",
-  builder: "Builder",
-};
-
-export const roleDescriptions: Record<RoleType, string> = {
-  vanguard: "Group Leader",
-  medic: "Medical Expert",
-  navigator: "Navigation & Routes",
-  comms: "Communications",
-  quartermaster: "Logistics & Supplies",
-  builder: "Construction",
-};
 
 export function useAppState() {
   const [userStatus, setUserStatus] = useState<StatusType>(null);

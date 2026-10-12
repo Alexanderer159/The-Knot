@@ -2,16 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocalUser } from "@/hooks/useLocalUser";
 import type { Tables } from "@/integrations/supabase/types";
-import type { RoleType, StatusType } from "@/lib/store";
+import type { StatusType } from "@/lib/store";
 
 export type Member = Tables<"members">;
 
-const allRoles: RoleType[] = ["vanguard", "medic", "navigator", "comms", "quartermaster", "builder"];
-
-export interface RosterEntry {
-  role: RoleType;
-  filled: boolean;
-  id?: string;
+export interface MemberEntry {
+  id: string;
+  userId: string;
   displayName: string;
   avatarInitials: string;
   status: StatusType | null;
@@ -63,7 +60,8 @@ export function useMembers() {
       const { data, error } = await supabase
         .from("members")
         .select("*")
-        .eq("knot_id", user.knotId);
+        .eq("knot_id", user.knotId)
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
       if (data) {
@@ -107,32 +105,16 @@ export function useMembers() {
     return () => window.removeEventListener("knot-sync-complete", handler);
   }, [fetchMembers]);
 
-  const roster: RosterEntry[] = allRoles.map((role) => {
-    const match = members.find((m) => m.role === role);
-    if (match) {
-      return {
-        role,
-        filled: true,
-        id: match.id,
-        displayName: match.display_name,
-        avatarInitials: match.avatar_initials || initialsFrom(match.display_name),
-        status: match.status,
-        lastCheckIn: match.last_check_in,
-        latitude: match.latitude,
-        longitude: match.longitude,
-      };
-    }
-    return {
-      role,
-      filled: false,
-      displayName: "Role not filled",
-      avatarInitials: "—",
-      status: null,
-      lastCheckIn: null,
-      latitude: null,
-      longitude: null,
-    };
-  });
+  const roster: MemberEntry[] = members.map((m) => ({
+    id: m.id,
+    userId: m.user_id,
+    displayName: m.display_name,
+    avatarInitials: m.avatar_initials || initialsFrom(m.display_name),
+    status: m.status,
+    lastCheckIn: m.last_check_in,
+    latitude: m.latitude,
+    longitude: m.longitude,
+  }));
 
   return { members, roster, loading, isOffline, refetch: () => fetchMembers(true) };
 }

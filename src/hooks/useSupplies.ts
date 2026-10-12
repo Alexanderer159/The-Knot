@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocalUser } from "@/hooks/useLocalUser";
+import { useAuth } from "@/hooks/useAuth";
 import type { Tables, Enums } from "@/integrations/supabase/types";
 import { enqueueAction } from "@/lib/syncQueue";
 
@@ -32,6 +33,7 @@ function saveCachedSupplies(knotId: string, supplies: Supply[]) {
 
 export function useSupplies() {
   const { user } = useLocalUser();
+  const { user: authUser } = useAuth();
   const [supplies, setSupplies] = useState<Supply[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
@@ -40,6 +42,7 @@ export function useSupplies() {
   // activity log as one entry after LOG_DEBOUNCE_MS of no further changes
   const pendingLogRef = useRef<Record<string, { timer: ReturnType<typeof setTimeout>; total: number }>>({});
 
+  // Row Level Security returns my own supplies plus the supplies of everyone in my Knot
   const fetchSupplies = useCallback(async (showLoading = false) => {
     if (!user?.knotId) {
       setSupplies([]);
@@ -52,7 +55,6 @@ export function useSupplies() {
       const { data, error } = await supabase
         .from("supplies")
         .select("*")
-        .eq("knot_id", user.knotId)
         .order("category", { ascending: true })
         .order("created_at", { ascending: true });
 
@@ -63,7 +65,6 @@ export function useSupplies() {
         setIsOffline(false);
       }
     } catch {
-      // Network failed: fall back to the last known cached data
       setSupplies(loadCachedSupplies(user.knotId));
       setIsOffline(true);
     }
@@ -75,13 +76,20 @@ export function useSupplies() {
     fetchSupplies(true);
   }, [fetchSupplies]);
 
+  // Supplies changes (visible ones only, thanks to RLS) and membership changes
+  // (someone joins or leaves, so their supplies appear or disappear)
   useEffect(() => {
     if (!user?.knotId) return;
     const channel = supabase
       .channel(`supplies-${user.knotId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "supplies", filter: `knot_id=eq.${user.knotId}` },
+        { event: "*", schema: "public", table: "supplies" },
+        () => fetchSupplies(false)
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "members", filter: `knot_id=eq.${user.knotId}` },
         () => fetchSupplies(false)
       )
       .subscribe();
@@ -113,13 +121,13 @@ export function useSupplies() {
   }, []);
 
   const addSupply = useCallback(async (item: { name: string; category: SupplyCategory; need: number; unit: string }) => {
-    if (!user?.knotId) return { error: new Error("No knot") };
+    if (!user?.knotId || !authUser) return { error: new Error("No knot") };
 
     try {
       const { data, error } = await supabase
         .from("supplies")
         .insert({
-          knot_id: user.knotId,
+          user_id: authUser.id,
           name: item.name,
           category: item.category,
           need: item.need,
@@ -144,7 +152,7 @@ export function useSupplies() {
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
       const optimistic: Supply = {
         id: tempId,
-        knot_id: user.knotId,
+        user_id: authUser.id,
         name: item.name,
         category: item.category,
         need: item.need,
@@ -162,7 +170,7 @@ export function useSupplies() {
 
       enqueueAction("add_supply", {
         tempId,
-        knotId: user.knotId,
+        userId: authUser.id,
         name: item.name,
         category: item.category,
         need: item.need,
@@ -170,7 +178,7 @@ export function useSupplies() {
       });
       return { error: null };
     }
-  }, [user?.knotId]);
+  }, [user?.knotId, authUser]);
 
   const updateSupply = useCallback(async (id: string, changes: Partial<Pick<Supply, "have" | "need" | "acquired">>) => {
     setSupplies((prev) => {
@@ -184,8 +192,6 @@ export function useSupplies() {
       if (error) throw error;
       return { error: null };
     } catch {
-      // Offline: keep the optimistic local/cached update, queue the real
-      // write so it replays once connectivity returns
       enqueueAction("update_supply", { id, changes });
       return { error: null };
     }
@@ -221,7 +227,6 @@ export function useSupplies() {
   }, [user?.knotId, flushHaveLog]);
 
   // Flush any pending logs immediately if the hook unmounts mid-debounce
-  // (e.g. navigating away right after adjusting a quantity)
   useEffect(() => {
     return () => {
       Object.keys(pendingLogRef.current).forEach((id) => {

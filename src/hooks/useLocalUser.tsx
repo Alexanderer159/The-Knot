@@ -1,7 +1,7 @@
 import { createContext, useContext, ReactNode, useCallback, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import type { RoleType, StatusType } from "@/lib/store";
+import type { StatusType } from "@/lib/store";
 import { enqueueAction } from "@/lib/syncQueue";
 
 // Dependents remain local for now (per earlier decision: handle in backend later)
@@ -15,7 +15,6 @@ export interface Dependent {
 
 interface LocalUser {
   displayName: string;
-  role: RoleType;
   knotId: string;
   status: StatusType;
   dependents: Dependent[];
@@ -26,13 +25,12 @@ interface LocalUserContextType {
   isSetup: boolean;
   loading: boolean;
   createKnot: (displayName: string, knotName?: string) => Promise<{ error: Error | null; code?: string }>;
-  joinKnot: (code: string, role: RoleType, displayName: string) => Promise<{ error: Error | null }>;
+  joinKnot: (code: string, displayName: string) => Promise<{ error: Error | null }>;
   updateStatus: (status: StatusType) => Promise<void>;
   updateName: (name: string) => Promise<void>;
   addDependent: (dep: Omit<Dependent, "id">) => void;
   removeDependent: (id: string) => void;
   shareLocation: (lat: number, lng: number, status: StatusType) => Promise<{ error: Error | null }>;
-  changeRole: (newRole: RoleType) => Promise<{ error: Error | null }>;
   leaveKnot: () => Promise<{ error: Error | null }>;
   deleteKnot: () => Promise<{ error: Error | null }>;
 }
@@ -42,8 +40,6 @@ const CACHED_MEMBER_KEY = "cached-member"; // same key used by useAuth.ts's cach
 
 // Patches the locally cached member record so the UI reflects an offline
 // change immediately, even though the write itself is queued for later.
-// This mirrors whatever useAuth.ts last cached, so refetchMember() (once
-// back online) simply overwrites it with the real server truth.
 function patchCachedMember(changes: Record<string, any>) {
   try {
     const raw = localStorage.getItem(CACHED_MEMBER_KEY);
@@ -76,7 +72,6 @@ export function LocalUserProvider({ children }: { children: ReactNode }) {
   const user: LocalUser | null = member
     ? {
         displayName: member.display_name,
-        role: member.role,
         knotId: member.knot_id,
         status: member.status as StatusType,
         dependents,
@@ -92,74 +87,53 @@ export function LocalUserProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null, code: data?.code };
   }, [refetchMember]);
 
-  const changeRole = useCallback(async (newRole: RoleType) => {
-    if (!authUser || !user) return { error: new Error("Not authenticated") };
-    if (user.role === "vanguard") {
-      return { error: new Error("Vanguard can't switch roles. Transfer leadership or delete the Knot instead.") };
-    }
-    if (newRole === "vanguard") {
-      return { error: new Error("Vanguard can only be assigned automatically when a Knot is created.") };
-    }
-    const { data: existing } = await supabase
-      .from("members")
-      .select("id")
-      .eq("knot_id", user.knotId)
-      .eq("role", newRole)
-      .neq("user_id", authUser.id)
-      .maybeSingle();
-
-    if (existing) {
-      return { error: new Error("That role is already taken in your Knot.") };
-    }
-
-    const { error } = await supabase
-      .from("members")
-      .update({ role: newRole })
-      .eq("user_id", authUser.id);
-
-    if (!error) await refetchMember();
-    return { error: error as Error | null };
-  }, [authUser, user, refetchMember]);
-
-  const leaveKnot = useCallback(async () => {
-    if (!authUser || !user) return { error: new Error("Not authenticated") };
-    if (user.role === "vanguard") {
-      return { error: new Error("As Vanguard, you can't leave. Delete the Knot instead.") };
-    }
-
-    const { error } = await supabase
-      .from("members")
-      .delete()
-      .eq("user_id", authUser.id);
-
-    if (!error) await refetchMember(); // member becomes null, isSetup flips false, Gate redirects to /setup
-    return { error: error as Error | null };
-  }, [authUser, user, refetchMember]);
-
-  const deleteKnot = useCallback(async () => {
-    if (!user) return { error: new Error("No knot to delete") };
-    if (user.role !== "vanguard") {
-      return { error: new Error("Only the Vanguard can delete the Knot.") };
-    }
-
-    const { error } = await supabase
-      .from("knots")
-      .delete()
-      .eq("id", user.knotId);
-
-    if (!error) await refetchMember(); // your own member row is gone too (cascade), isSetup flips false
-    return { error: error as Error | null };
-  }, [user, refetchMember]);
-
-  const joinKnot = useCallback(async (code: string, role: RoleType, displayName: string) => {
+  const joinKnot = useCallback(async (code: string, displayName: string) => {
     const { error } = await supabase.rpc("join_knot", {
       p_code: code.toUpperCase(),
-      p_role: role,
       p_display_name: displayName,
     });
     if (!error) await refetchMember();
     return { error: error as Error | null };
   }, [refetchMember]);
+
+  // The database blocks the creator from leaving (they delete the Knot instead),
+  // so an empty result here means that rule was hit
+  const leaveKnot = useCallback(async () => {
+    if (!authUser || !user) return { error: new Error("Not authenticated") };
+
+    const { data, error } = await supabase
+      .from("members")
+      .delete()
+      .eq("user_id", authUser.id)
+      .select();
+
+    if (error) return { error: error as Error };
+    if (!data || data.length === 0) {
+      return { error: new Error("The creator can't leave the Knot. Delete it instead.") };
+    }
+
+    await refetchMember(); // member becomes null, isSetup flips false, Gate redirects to /setup
+    return { error: null };
+  }, [authUser, user, refetchMember]);
+
+  // Only the creator passes the database policy, an empty result means someone else tried
+  const deleteKnot = useCallback(async () => {
+    if (!user) return { error: new Error("No knot to delete") };
+
+    const { data, error } = await supabase
+      .from("knots")
+      .delete()
+      .eq("id", user.knotId)
+      .select();
+
+    if (error) return { error: error as Error };
+    if (!data || data.length === 0) {
+      return { error: new Error("Only the creator can delete the Knot.") };
+    }
+
+    await refetchMember(); // your own member row is gone too (cascade), isSetup flips false
+    return { error: null };
+  }, [user, refetchMember]);
 
   const updateStatus = useCallback(async (status: StatusType) => {
     if (!authUser) return;
@@ -172,8 +146,6 @@ export function LocalUserProvider({ children }: { children: ReactNode }) {
       await refetchMember();
     } catch {
       enqueueAction("update_status", { userId: authUser.id, status });
-      // Reflect the change locally right away, since we're offline and
-      // refetchMember() won't see it until the queue drains later
       patchCachedMember({ status, last_check_in: new Date().toISOString() });
       await refetchMember();
     }
@@ -199,7 +171,7 @@ export function LocalUserProvider({ children }: { children: ReactNode }) {
         last_check_in: new Date().toISOString(),
       });
       await refetchMember();
-      return { error: null }; // treat as "accepted, will sync" rather than a hard failure
+      return { error: null };
     }
   }, [authUser, refetchMember]);
 
@@ -234,7 +206,6 @@ export function LocalUserProvider({ children }: { children: ReactNode }) {
       updateStatus,
       updateName,
       shareLocation,
-      changeRole,
       leaveKnot,
       deleteKnot,
       addDependent,

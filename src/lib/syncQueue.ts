@@ -6,7 +6,7 @@ export type QueuedActionType =
   | "update_name"
   | "add_supply"
   | "adjust_supply_have"
-  | "log_supply_have_change"  // new
+  | "log_supply_have_change"
   | "update_supply"
   | "remove_supply"
   | "add_marker"
@@ -88,16 +88,16 @@ async function executeAction(action: QueuedAction, idMap: Record<string, string>
       return {};
     }
 
-    case "log_supply_have_change": {
-  const id = resolveId(p.id, idMap);
-  const { error } = await supabase.rpc("log_supply_have_change", { p_id: id, p_total_delta: p.totalDelta });
-  if (error) throw error;
-  return {};
-}
-
     case "adjust_supply_have": {
       const id = resolveId(p.id, idMap);
       const { error } = await supabase.rpc("adjust_supply_have", { p_id: id, p_delta: p.delta });
+      if (error) throw error;
+      return {};
+    }
+
+    case "log_supply_have_change": {
+      const id = resolveId(p.id, idMap);
+      const { error } = await supabase.rpc("log_supply_have_change", { p_id: id, p_total_delta: p.totalDelta });
       if (error) throw error;
       return {};
     }
@@ -111,7 +111,7 @@ async function executeAction(action: QueuedAction, idMap: Record<string, string>
     case "add_supply": {
       const { data, error } = await supabase
         .from("supplies")
-        .insert({ knot_id: p.knotId, name: p.name, category: p.category, need: p.need, unit: p.unit, have: 0, acquired: false })
+        .insert({ user_id: p.userId, name: p.name, category: p.category, need: p.need, unit: p.unit, have: 0, acquired: false })
         .select()
         .single();
       if (error) throw error;

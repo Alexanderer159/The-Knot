@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { Shield, Heart, Compass, Radio, Package, HardHat, Users, UserPlus, Bell, Trash2, CheckCircle2, AlertTriangle, ShieldAlert, MapPin, ListChecks } from "lucide-react";
+import { User, Users, UserPlus, Bell, Trash2, CheckCircle2, AlertTriangle, ShieldAlert, MapPin, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,39 +8,26 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { roleLabels, roleDescriptions, type RoleType, type StatusType } from "@/lib/store";
+import { type StatusType } from "@/lib/store";
 import { useMembers } from "@/hooks/useMembers";
-import { useSupplies } from "@/hooks/useSupplies";
 import { useActivityLog } from "@/hooks/useActivityLog";
 import { timeAgo } from "@/lib/timeAgo";
-import { roleCategoryMap } from "@/lib/supplies";
 import { useLocalUser } from "@/hooks/useLocalUser";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import RoleDetailSheet from "@/components/RoleDetailSheet";
-
-const roleIcons: Record<RoleType, React.ElementType> = {
-  vanguard: Shield,
-  medic: Heart,
-  navigator: Compass,
-  comms: Radio,
-  quartermaster: Package,
-  builder: HardHat,
-};
+import MemberDetailSheet from "@/components/MemberDetailSheet";
 
 export default function Grupo() {
   const { user, addDependent, removeDependent, shareLocation } = useLocalUser();
+  const { user: authUser } = useAuth();
   const { toast } = useToast();
   const { roster } = useMembers();
   const { entries: activity, hasMore } = useActivityLog(10);
   const navigate = useNavigate();
-  const [sheetRole, setSheetRole] = useState<RoleType | null>(null);
-  const { supplies } = useSupplies();
+  const [sheetUserId, setSheetUserId] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const relevantCategories = sheetRole ? roleCategoryMap[sheetRole] : [];
-  const filteredSupplies = sheetRole ? supplies.filter((s) => relevantCategories.includes(s.category)) : [];
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [depName, setDepName] = useState("");
@@ -93,7 +80,7 @@ export default function Grupo() {
     navigate("/map", { state: { focusLat: lat, focusLng: lng } });
   };
 
-  const sheetEntry = roster.find(r => r.role === sheetRole);
+  const sheetEntry = sheetUserId ? roster.find((r) => r.userId === sheetUserId) : undefined;
 
   useEffect(() => {
     const quickStatus = searchParams.get("quickstatus");
@@ -129,19 +116,25 @@ export default function Grupo() {
           <AccordionTrigger className="hover:no-underline">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
-              KNOT MEMBERS
+              KNOT MEMBERS ({roster.length})
             </CardTitle>
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-2">
+              {roster.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-2">No members yet</p>
+              )}
               {roster.map((entry) => {
-                const Icon = roleIcons[entry.role];
-                const isCurrentUser = user?.role === entry.role;
-                const hasValidLocation = entry.filled && entry.latitude && entry.longitude && !(entry.latitude === 0 && entry.longitude === 0);
+                const isCurrentUser = entry.userId === authUser?.id;
+                const name = isCurrentUser && user ? user.displayName : entry.displayName;
+                const hasValidLocation =
+                  entry.latitude != null &&
+                  entry.longitude != null &&
+                  !(entry.latitude === 0 && entry.longitude === 0);
 
                 return (
-                  <Card key={entry.role} className={cn("relative transition-all", !entry.filled && "")}
-                    onClick={() => setSheetRole(entry.role)}
+                  <Card key={entry.userId} className="relative transition-all"
+                    onClick={() => setSheetUserId(entry.userId)}
                   >
                     <span className={cn("absolute top-2 right-2 h-2 w-2 rounded-full shrink-0",
                       entry.status === "ok" ? "bg-safe" :
@@ -151,27 +144,18 @@ export default function Grupo() {
 
                     <CardContent className="flex items-center justify-between gap-3">
                       <div className="flex h-10 w-10 items-center justify-center">
-                        <Icon className="text-primary" />
+                        <User className="text-primary" />
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold">
-                          {roleLabels[entry.role]}
+                        <p className="font-semibold truncate">
+                          {name}
                           {isCurrentUser && <span className="text-primary text-xs ml-2">(You)</span>}
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          {entry.filled ? `${entry.displayName}` : "Role not filled"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{roleDescriptions[entry.role]}</p>
                       </div>
 
                       <div className="flex flex-col justify-center items-center gap-2">
-                        {!entry.filled ? (
-                          <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                            <MapPin className="h-4 w-4 shrink-0" />
-                            No Location
-                          </p>
-                        ) : hasValidLocation ? (
+                        {hasValidLocation ? (
                           <button
                             onClick={(e) => goToLocation(e, entry.latitude!, entry.longitude!)}
                             className="text-sm text-muted-foreground font-mono flex items-center gap-1 mt-0.5 hover:text-primary transition-colors"
@@ -312,15 +296,20 @@ export default function Grupo() {
         </CardContent>
       </Card>
 
-      {/* Role Detail Sheet */}
-      <RoleDetailSheet
-        role={sheetRole}
-        isCurrentUser={user?.role === sheetRole}
-        userName={sheetEntry ? (user?.role === sheetRole ? user!.displayName : sheetEntry.displayName) : ""}
-        avatar={sheetEntry?.avatarInitials}
-        status={sheetEntry?.status}
-        lastCheckIn={sheetEntry?.lastCheckIn ?? undefined}
-        onClose={() => setSheetRole(null)}
+      {/* Member Detail Sheet */}
+      <MemberDetailSheet
+        member={
+          sheetEntry
+            ? {
+                userId: sheetEntry.userId,
+                displayName:
+                  sheetEntry.userId === authUser?.id && user ? user.displayName : sheetEntry.displayName,
+                status: sheetEntry.status,
+                lastCheckIn: sheetEntry.lastCheckIn,
+              }
+            : null
+        }
+        onClose={() => setSheetUserId(null)}
       />
     </div>
   );

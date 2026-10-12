@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Shield, Users, KeyRound, Plus, LogOut } from "lucide-react";
+import { Users, KeyRound, Plus, LogOut } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocalUser } from "@/hooks/useLocalUser";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { roleLabels, roleDescriptions, type RoleType } from "@/lib/store";
-
-const roles: RoleType[] = ["medic", "navigator", "comms", "quartermaster", "builder"];
 
 export default function KnotSetup() {
   const { isSetup, createKnot, joinKnot } = useLocalUser();
@@ -27,9 +23,8 @@ export default function KnotSetup() {
   // Join knot state
   const [joinName, setJoinName] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [joinRole, setJoinRole] = useState<RoleType>("medic");
 
-  // Not authenticated at all → back to login
+  // Not authenticated at all, back to login
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
 
   // Once a members row exists (knot created or joined), leave this page
@@ -52,19 +47,19 @@ export default function KnotSetup() {
     e.preventDefault();
     if (!joinName.trim() || !joinCode.trim()) return;
     setSubmitting(true);
-    const { error } = await joinKnot(joinCode.trim(), joinRole, joinName.trim());
+    const { error } = await joinKnot(joinCode.trim(), joinName.trim());
     setSubmitting(false);
     if (error) {
       toast({ title: "Couldn't join Knot", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Joined the Knot", description: `Role: ${roleLabels[joinRole]}` });
+      toast({ title: "Joined the Knot" });
     }
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-      
-        <img className="max-w-52" src="/LOGO.png" />
+
+      <img className="max-w-52" src="/LOGO.png" />
 
       {mode === "choose" && (
         <Card className="w-full max-w-sm tactical-border">
@@ -102,9 +97,6 @@ export default function KnotSetup() {
                 <Label>Knot's Name (optional)</Label>
                 <Input value={knotName} onChange={e => setKnotName(e.target.value)} placeholder="The crew" className="bg-secondary border-border" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                You'll be assigned as <span className="text-primary font-semibold">Vanguard</span> (leader) automatically.
-              </p>
               <Button type="submit" className="w-full text-black font-bold" size="lg" disabled={submitting}>
                 <Users /> {submitting ? "Creating..." : "CREATE KNOT"}
               </Button>
@@ -132,19 +124,6 @@ export default function KnotSetup() {
               <div className="space-y-2">
                 <Label>Knot's Code</Label>
                 <Input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())} placeholder="X7K2P9" required maxLength={6} className="bg-secondary border-border font-mono tracking-widest" />
-              </div>
-              <div className="space-y-2">
-                <Label>Your role</Label>
-                <Select value={joinRole} onValueChange={(v) => setJoinRole(v as RoleType)}>
-                  <SelectTrigger className="bg-secondary border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map(r => (
-                      <SelectItem key={r} value={r}>{roleLabels[r]} — {roleDescriptions[r]}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <Button type="submit" className="w-full text-black font-bold" size="lg" disabled={submitting}>
                 <KeyRound />{submitting ? "Joining..." : "JOIN"}
